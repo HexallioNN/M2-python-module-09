@@ -82,11 +82,11 @@ if __name__ == "__main__":
             contact_type=ContactType.telepathic,
             signal_strength=5.0,
             duration_minutes=20,
-            witness_count=1,  # invalid
+            witness_count=1,
             message_received="We come in peace",
             is_verified=True
         )
 
     except ValidationError as e:
         print("Expected validation error:")
-        print(e.errors()[0]["ctx"]["error"])
+        print(e.errors()[0]["msg"])
