@@ -11,10 +11,10 @@ class SpaceStation(BaseModel):
     oxygen_level: Annotated[float, Field(ge=0.0, le=100.0)]
     last_maintenance: datetime
     is_operational: bool = True
-    notes: Optional[str] = None
+    notes: Optional[str] = Field(default=None, max_length=200)
 
 
-if __name__ == "__main__":
+def main() -> None:
     print("Space Station Data Validation")
     print("========================================")
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     print("\n========================================")
 
     try:
-        invalid_station = SpaceStation(
+        SpaceStation(
             station_id="ISS002",
             name="Broken Station",
             crew_size=25,
@@ -47,7 +47,10 @@ if __name__ == "__main__":
             oxygen_level=90.0,
             last_maintenance=datetime.now(),
         )
-
     except ValidationError as e:
         print("Expected validation error:")
         print(e.errors()[0]["msg"])
+
+
+if __name__ == "__main__":
+    main()
