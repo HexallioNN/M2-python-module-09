@@ -2,14 +2,15 @@ from pydantic import BaseModel, Field, model_validator, ValidationError
 from typing import Annotated
 from datetime import datetime
 from enum import Enum
+from typing import Self
 
 
-class Rank(str, Enum):
-    cadet = "cadet"
-    officer = "officer"
-    lieutenant = "lieutenant"
-    captain = "captain"
-    commander = "commander"
+class Rank(Enum):
+    cadet = 1
+    officer = 2
+    lieutenant = 3
+    captain = 4
+    commander = 5
 
 
 class CrewMember(BaseModel):
@@ -33,7 +34,7 @@ class SpaceMission(BaseModel):
     budget_millions: Annotated[float, Field(ge=1.0, le=10000.0)]
 
     @model_validator(mode="after")
-    def mission_validator(self) -> "SpaceMission":
+    def mission_validator(self) -> Self:
         if not self.mission_id.startswith("M"):
             raise ValueError('Mission ID must start with "M"')
         if not any(
@@ -43,28 +44,23 @@ class SpaceMission(BaseModel):
             raise ValueError(
                 "Mission must have at least one Commander or Captain"
             )
+        if not all(member.is_active for member in self.crew):
+            raise ValueError(
+                "All crew members must be active"
+            )
         if self.duration_days > 365:
             experienced_count = sum(
                 1
                 for member in self.crew
                 if member.years_experience >= 5
             )
+
             if experienced_count < len(self.crew) / 2:
                 raise ValueError(
-                    "Long missions (> 365 days) need 50% experienced "
-                    "crew (5+ years)"
+                    "Long missions require at least 50% experienced crew \
+members"
                 )
-        if not all(member.is_active for member in self.crew):
-            raise ValueError("All crew members must be active")
         return self
-
-
-def error_message(error: ValidationError) -> str:
-    detail = error.errors()[0]
-    ctx = detail.get("ctx")
-    if ctx and "error" in ctx:
-        return str(ctx["error"])
-    return detail["msg"]
 
 
 def main() -> None:
@@ -115,15 +111,17 @@ def main() -> None:
         print(f"Budget: ${mission.budget_millions}M")
         print(f"Crew size: {len(mission.crew)}")
         print("Crew members:")
+
         for member in mission.crew:
             print(
-                f"- {member.name} ({member.rank.value}) - "
+                f"- {member.name} ({member.rank.name}) - "
                 f"{member.specialization}"
             )
-    except ValidationError as e:
-        print(error_message(e))
 
-    print("\n=========================================")
+    except ValidationError as e:
+        print(e)
+
+    print("=========================================")
 
     try:
         SpaceMission(
@@ -152,9 +150,10 @@ def main() -> None:
                 ),
             ],
         )
+
     except ValidationError as e:
         print("Expected validation error:")
-        print(error_message(e))
+        print(e.errors()[0]["msg"])
 
 
 if __name__ == "__main__":

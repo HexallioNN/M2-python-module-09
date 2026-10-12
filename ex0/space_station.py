@@ -47,6 +47,7 @@ def main() -> None:
             oxygen_level=90.0,
             last_maintenance=datetime.now(),
         )
+
     except ValidationError as e:
         print("Expected validation error:")
         print(e.errors()[0]["msg"])
